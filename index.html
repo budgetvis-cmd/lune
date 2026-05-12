@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1f2c3d" />
+    <meta name="description" content="Lune — carnet personnel de suivi quotidien." />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Lune" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>Lune</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section id="onboarding" class="onboarding-shell" aria-labelledby="onboardingTitle">
+      <div class="onboarding-copy">
+        <p class="eyebrow">Premi&egrave;re configuration</p>
+        <h1 id="onboardingTitle">Un suivi simple, sans pression.</h1>
+        <p>
+          Lune garde les informations sur cet appareil et aide &agrave; voir les prochaines
+          r&egrave;gles, la fen&ecirc;tre fertile estim&eacute;e et les ressentis du quotidien.
+        </p>
+      </div>
+
+      <form id="onboardingForm" class="onboarding-card">
+        <div class="onboarding-step">
+          <span class="step-number">01</span>
+          <div>
+            <h2>Elle veut surtout suivre quoi ?</h2>
+            <p>Le ton de l'app reste discret, mais les priorit&eacute;s peuvent changer.</p>
+          </div>
+        </div>
+
+        <div class="goal-grid" role="group" aria-label="Objectif du suivi">
+          <button class="goal-card is-active" type="button" data-goal="cycle" aria-pressed="true">
+            <strong>Cycle</strong>
+            <span>R&egrave;gles, sympt&ocirc;mes et rep&egrave;res du mois.</span>
+          </button>
+          <button class="goal-card" type="button" data-goal="fertility" aria-pressed="false">
+            <strong>Fertilit&eacute;</strong>
+            <span>Fen&ecirc;tre fertile et ovulation estim&eacute;e plus visibles.</span>
+          </button>
+        </div>
+
+        <div class="onboarding-step">
+          <span class="step-number">02</span>
+          <div>
+            <h2>Les 6 derniers mois</h2>
+            <p>Entre les dates de d&eacute;but des derni&egrave;res r&egrave;gles connues. Plus il y en a, meilleure est l'estimation.</p>
+          </div>
+        </div>
+
+        <div class="period-import-grid" aria-label="D&eacute;buts de r&egrave;gles des 6 derniers mois">
+          <label>
+            <span>Dernier d&eacute;but</span>
+            <input class="onboarding-period-date" type="date" data-period-index="0" />
+          </label>
+          <label>
+            <span>Cycle pr&eacute;c&eacute;dent</span>
+            <input class="onboarding-period-date" type="date" data-period-index="1" />
+          </label>
+          <label>
+            <span>Il y a 2 cycles</span>
+            <input class="onboarding-period-date" type="date" data-period-index="2" />
+          </label>
+          <label>
+            <span>Il y a 3 cycles</span>
+            <input class="onboarding-period-date" type="date" data-period-index="3" />
+          </label>
+          <label>
+            <span>Il y a 4 cycles</span>
+            <input class="onboarding-period-date" type="date" data-period-index="4" />
+          </label>
+          <label>
+            <span>Il y a 5 cycles</span>
+            <input class="onboarding-period-date" type="date" data-period-index="5" />
+          </label>
+        </div>
+
+        <div class="onboarding-step">
+          <span class="step-number">03</span>
+          <div>
+            <h2>Rep&egrave;res habituels</h2>
+            <p>La dur&eacute;e moyenne sert seulement si l'historique ne suffit pas encore.</p>
+          </div>
+        </div>
+
+        <div class="onboarding-fields compact-fields">
+          <label>
+            <span>Dur&eacute;e moyenne du cycle</span>
+            <input id="onboardingCycleLength" type="number" min="21" max="45" value="28" inputmode="numeric" />
+          </label>
+          <label>
+            <span>Dur&eacute;e habituelle des r&egrave;gles</span>
+            <input id="onboardingPeriodLength" type="number" min="2" max="10" value="5" inputmode="numeric" />
+          </label>
+        </div>
+
+        <div class="privacy-note">
+          <strong>Priv&eacute; par d&eacute;faut.</strong>
+          <span>Pas de compte, pas de pub, pas d'envoi serveur dans cette version locale.</span>
+        </div>
+
+        <div class="onboarding-actions">
+          <button class="primary-button" type="submit">Commencer</button>
+          <button id="skipOnboardingButton" class="text-button" type="button">Configurer plus tard</button>
+        </div>
+      </form>
+    </section>
+
+    <main id="appShell" class="app-shell is-hidden">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Suivi priv&eacute;</p>
+          <h1>Lune</h1>
+        </div>
+        <div class="today-card" aria-live="polite">
+          <span>Aujourd'hui</span>
+          <strong id="todayLabel"></strong>
+        </div>
+      </header>
+
+      <section id="configurationPrompt" class="configuration-prompt is-hidden" aria-live="polite">
+        <div>
+          <strong>Configuration &agrave; terminer</strong>
+          <p>Elle peut revenir ici quand elle veut pour entrer ses derniers cycles et obtenir des estimations plus utiles.</p>
+        </div>
+        <button id="configureNowButton" class="primary-button" type="button">Configurer maintenant</button>
+      </section>
+
+      <section id="installPrompt" class="install-prompt is-hidden" aria-live="polite">
+        <div>
+          <strong>Garder Lune sur son t&eacute;l&eacute;phone</strong>
+          <p id="installPromptHint">Ajoute l'app &agrave; l'&eacute;cran d'accueil pour l'ouvrir comme une vraie app, m&ecirc;me hors ligne.</p>
+        </div>
+        <div class="install-actions">
+          <button id="installAppButton" class="primary-button" type="button">Installer</button>
+          <button id="dismissInstallButton" class="text-button" type="button">Plus tard</button>
+        </div>
+      </section>
+
+      <section id="cycleRecap" class="cycle-recap is-hidden" aria-label="R&eacute;cap du cycle">
+        <header class="cycle-recap-head">
+          <strong>Ce cycle</strong>
+          <span id="cycleRecapMeta"></span>
+        </header>
+        <ul class="cycle-recap-stats">
+          <li><span id="recapFlowDays">--</span><small>jours de r&egrave;gles</small></li>
+          <li><span id="recapMucus">--</span><small>jours de glaire</small></li>
+          <li><span id="recapIntercourse">--</span><small>rapports</small></li>
+          <li><span id="recapSymptoms">--</span><small>ressenti dominant</small></li>
+        </ul>
+      </section>
+
+      <section class="summary-grid" aria-label="R&eacute;sum&eacute; du cycle">
+        <article class="metric-card metric-card-main">
+          <span>Jour du cycle</span>
+          <strong id="cycleDay">--</strong>
+          <p id="cyclePhase">Ajoute une date de d&eacute;but pour commencer.</p>
+        </article>
+        <article class="metric-card">
+          <span>Prochaines r&egrave;gles</span>
+          <strong id="nextPeriod">--</strong>
+          <p id="nextPeriodHint">Estimation personnelle, pas un diagnostic.</p>
+        </article>
+        <article class="metric-card">
+          <span>Fen&ecirc;tre fertile</span>
+          <strong id="fertileWindow">--</strong>
+          <p id="ovulationHint">Bas&eacute;e sur la dur&eacute;e moyenne du cycle.</p>
+        </article>
+        <article class="metric-card intimacy-card">
+          <span>Chances b&eacute;b&eacute;</span>
+          <strong id="babyChanceTitle">R&eacute;gulier</strong>
+          <p id="babyChanceHint">Pendant la fen&ecirc;tre fertile, faire l'amour souvent augmente les chances.</p>
+        </article>
+      </section>
+
+      <section class="workspace">
+        <aside class="panel settings-panel">
+          <div class="panel-heading">
+            <h2>R&eacute;glages</h2>
+            <div class="toolbar-actions">
+              <button id="restartOnboardingButton" class="icon-button" type="button" title="Revoir l'accueil" aria-label="Revoir l'accueil">
+                <span aria-hidden="true">?</span>
+              </button>
+              <button id="exportButton" class="icon-button" type="button" title="Exporter les donn&eacute;es" aria-label="Exporter les donn&eacute;es">
+                <span aria-hidden="true">↓</span>
+              </button>
+            </div>
+          </div>
+
+          <form id="cycleForm" class="form-grid">
+            <label>
+              <span>D&eacute;but des derni&egrave;res r&egrave;gles</span>
+              <input id="lastPeriodStart" type="date" required />
+            </label>
+
+            <label>
+              <span>Dur&eacute;e moyenne du cycle</span>
+              <div class="stepper">
+                <button type="button" data-step-target="cycleLength" data-step="-1" aria-label="R&eacute;duire la dur&eacute;e du cycle">−</button>
+                <input id="cycleLength" type="number" min="21" max="45" value="28" inputmode="numeric" />
+                <button type="button" data-step-target="cycleLength" data-step="1" aria-label="Augmenter la dur&eacute;e du cycle">+</button>
+              </div>
+            </label>
+
+            <label>
+              <span>Dur&eacute;e habituelle des r&egrave;gles</span>
+              <div class="stepper">
+                <button type="button" data-step-target="periodLength" data-step="-1" aria-label="R&eacute;duire la dur&eacute;e des r&egrave;gles">−</button>
+                <input id="periodLength" type="number" min="2" max="10" value="5" inputmode="numeric" />
+                <button type="button" data-step-target="periodLength" data-step="1" aria-label="Augmenter la dur&eacute;e des r&egrave;gles">+</button>
+              </div>
+            </label>
+
+            <button class="primary-button" type="submit">Mettre &agrave; jour</button>
+          </form>
+
+          <div class="history-block">
+            <div class="panel-heading compact">
+              <h2>Historique</h2>
+              <button id="addPeriodButton" class="ghost-button" type="button">Ajouter</button>
+            </div>
+            <ul id="periodHistory" class="history-list"></ul>
+          </div>
+
+          <div class="reminders-block">
+            <div class="panel-heading compact">
+              <h2>Rappels</h2>
+              <button id="testNotificationButton" class="ghost-button" type="button">Tester</button>
+            </div>
+            <p id="remindersStatus" class="reminders-status"></p>
+            <label class="reminder-toggle">
+              <input id="reminderPeriodInput" type="checkbox" data-reminder="period" />
+              <span>2 jours avant les r&egrave;gles</span>
+            </label>
+            <label class="reminder-toggle">
+              <input id="reminderFertileInput" type="checkbox" data-reminder="fertile" />
+              <span>D&eacute;but de la fen&ecirc;tre fertile</span>
+            </label>
+            <label class="reminder-toggle">
+              <input id="reminderOvulationInput" type="checkbox" data-reminder="ovulation" />
+              <span>Pic d'ovulation estim&eacute;</span>
+            </label>
+            <p class="reminders-note">Les rappels apparaissent quand l'app est ouverte ou r&eacute;cemment utilis&eacute;e &mdash; un t&eacute;l&eacute;phone hors connexion n'en re&ccedil;oit pas.</p>
+          </div>
+        </aside>
+
+        <section class="calendar-panel">
+          <div class="panel-heading">
+            <h2>Calendrier</h2>
+            <div class="legend" aria-label="L&eacute;gende">
+              <span class="legend-today">Aujourd'hui</span>
+              <span><i class="dot period"></i>R&egrave;gles</span>
+              <span><i class="dot fertile"></i>Fertile</span>
+              <span><i class="dot ovulation"></i>Ovulation</span>
+              <span><i class="dot mucus"></i>Glaire fertile</span>
+              <span><i class="dot intercourse"></i>Rapport</span>
+            </div>
+          </div>
+          <div id="calendar" class="calendar-grid" aria-live="polite"></div>
+        </section>
+
+        <aside class="panel journal-panel">
+          <div class="panel-heading">
+            <h2>Journal</h2>
+            <input id="journalDate" type="date" aria-label="Date du journal" />
+          </div>
+
+          <button id="markPeriodStartButton" class="ghost-button journal-mark-start" type="button">
+            Marquer comme d&eacute;but de r&egrave;gles
+          </button>
+
+          <div class="journal-group">
+            <span class="field-title">Flux</span>
+            <div class="segmented" role="group" aria-label="Flux">
+              <button type="button" data-flow="none" aria-pressed="false">Aucun</button>
+              <button type="button" data-flow="light" aria-pressed="false">L&eacute;ger</button>
+              <button type="button" data-flow="medium" aria-pressed="false">Moyen</button>
+              <button type="button" data-flow="heavy" aria-pressed="false">Fort</button>
+            </div>
+            <p class="flow-marking-hint">Ce jour sera compt&eacute; comme jour de r&egrave;gles.</p>
+          </div>
+
+          <div class="journal-group">
+            <span class="field-title">Glaire cervicale</span>
+            <div class="segmented mucus-grid" role="group" aria-label="Glaire cervicale">
+              <button type="button" data-mucus="none" aria-pressed="true">Rien</button>
+              <button type="button" data-mucus="dry" aria-pressed="false">S&egrave;che</button>
+              <button type="button" data-mucus="sticky" aria-pressed="false">Collante</button>
+              <button type="button" data-mucus="creamy" aria-pressed="false">Cr&eacute;meuse</button>
+              <button type="button" data-mucus="watery" aria-pressed="false">Aqueuse</button>
+              <button type="button" data-mucus="eggwhite" aria-pressed="false">Blanc d'&oelig;uf</button>
+            </div>
+          </div>
+
+          <div class="journal-group">
+            <span class="field-title">Rapport</span>
+            <div class="segmented intercourse-grid" role="group" aria-label="Rapport">
+              <button type="button" data-intercourse="none" aria-pressed="true">Aucun</button>
+              <button type="button" data-intercourse="unprotected" aria-pressed="false">Sans pr&eacute;servatif</button>
+              <button type="button" data-intercourse="protected" aria-pressed="false">Avec pr&eacute;servatif</button>
+            </div>
+          </div>
+
+          <div class="journal-group">
+            <span class="field-title">Ressenti</span>
+            <div class="chip-grid">
+              <button type="button" data-symptom="crampes" aria-pressed="false">Crampes</button>
+              <button type="button" data-symptom="fatigue" aria-pressed="false">Fatigue</button>
+              <button type="button" data-symptom="tension" aria-pressed="false">Tension</button>
+              <button type="button" data-symptom="calme" aria-pressed="false">Calme</button>
+              <button type="button" data-symptom="libido" aria-pressed="false">Libido</button>
+              <button type="button" data-symptom="migraine" aria-pressed="false">Migraine</button>
+            </div>
+          </div>
+
+          <label class="notes-field">
+            <span>Notes</span>
+            <textarea id="journalNotes" rows="5" placeholder="Un d&eacute;tail &agrave; garder en t&ecirc;te..."></textarea>
+          </label>
+
+          <button id="saveJournalButton" class="primary-button" type="button">Enregistrer</button>
+          <p id="saveState" class="save-state" role="status"></p>
+        </aside>
+      </section>
+    </main>
+
+    <template id="historyItemTemplate">
+      <li>
+        <span></span>
+        <button type="button" aria-label="Supprimer cette entr&eacute;e">×</button>
+      </li>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>

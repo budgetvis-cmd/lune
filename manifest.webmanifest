@@ -1,0 +1,21 @@
+{
+  "name": "Lune",
+  "short_name": "Lune",
+  "description": "Carnet personnel de suivi quotidien.",
+  "id": "/",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1f2c3d",
+  "theme_color": "#1f2c3d",
+  "categories": ["lifestyle", "utilities"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
