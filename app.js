@@ -91,7 +91,7 @@ function init() {
 
 function loadState() {
   const fallback = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     settings: {
       lastPeriodStart: "",
       cycleLength: 28,
@@ -125,9 +125,18 @@ function loadState() {
           merged.journal[date] = entry;
         }
       }
-      merged.schemaVersion = 2;
     }
 
+    if (!saved.schemaVersion || saved.schemaVersion < 3) {
+      for (const [date, entry] of Object.entries(merged.journal)) {
+        if (entry && typeof entry === "object") {
+          if (!entry.ovulationTest) entry.ovulationTest = "none";
+          merged.journal[date] = entry;
+        }
+      }
+    }
+
+    merged.schemaVersion = 3;
     return merged;
   } catch {
     return fallback;
@@ -297,6 +306,10 @@ function bindEvents() {
 
   document.querySelectorAll("[data-intercourse]").forEach((button) => {
     button.addEventListener("click", () => setActiveButton("[data-intercourse]", button));
+  });
+
+  document.querySelectorAll("[data-ovutest]").forEach((button) => {
+    button.addEventListener("click", () => setActiveButton("[data-ovutest]", button));
   });
 
   els.markPeriodStartButton.addEventListener("click", togglePeriodStart);
@@ -580,12 +593,21 @@ function formatNextPeriodHint(cycleStats, windows, isOverdue, daysToPeriod) {
 }
 
 function formatOvulationHint(cycleStats, windows) {
+  if (windows.refinedBy === "test-positive") {
+    return `Test positif détecté · pic estimé ${shortFormatter.format(windows.ovulationPeak)}`;
+  }
+  if (windows.refinedBy === "test-negative") {
+    return `Test négatif · pic repoussé au ${shortFormatter.format(windows.ovulationPeak)}`;
+  }
+  if (windows.refinedBy === "mucus+negative") {
+    return `Glaire + test négatif · pic estimé ${shortFormatter.format(windows.ovulationPeak)}`;
+  }
   if (windows.refinedByMucus) {
     return `Pic détecté par la glaire le ${shortFormatter.format(windows.ovulationPeak)}`;
   }
   const peakLabel = `Pic estimé ${shortFormatter.format(windows.ovulationPeak)}`;
   if (cycleStats.spread >= 7) {
-    return `${peakLabel} · cycles variables, fie-toi à la glaire pour préciser`;
+    return `${peakLabel} · cycles variables, fie-toi à la glaire ou aux tests`;
   }
   if (cycleStats.isVariable) {
     return `${peakLabel} · zone ${formatDateRange(windows.ovulationStart, windows.ovulationEnd)}`;
@@ -674,6 +696,7 @@ function renderMonth(monthDate) {
     const isFertileMucus = Boolean(
       journalEntry && mucusFertilityScore(journalEntry.mucus) > 0,
     );
+    const ovutest = journalEntry ? journalEntry.ovulationTest : "none";
     button.className = classNames("day", {
       "is-muted": date.getMonth() !== monthDate.getMonth(),
       "is-today": sameDate(date, new Date()),
@@ -689,6 +712,9 @@ function renderMonth(monthDate) {
       "has-intercourse": Boolean(
         journalEntry && journalEntry.intercourse && journalEntry.intercourse !== "none",
       ),
+      "has-test": ovutest && ovutest !== "none",
+      "has-test-positive": ovutest === "positive",
+      "has-test-negative": ovutest === "negative",
     });
     button.dataset.date = dateString;
     button.textContent = String(date.getDate());
@@ -707,6 +733,7 @@ function loadJournalEntry(dateString) {
     notes: "",
     mucus: "none",
     intercourse: "none",
+    ovulationTest: "none",
   };
   const symptoms = Array.isArray(entry.symptoms) ? entry.symptoms : [];
 
@@ -715,6 +742,10 @@ function loadJournalEntry(dateString) {
   setActiveButton(
     "[data-intercourse]",
     document.querySelector(`[data-intercourse="${entry.intercourse || "none"}"]`),
+  );
+  setActiveButton(
+    "[data-ovutest]",
+    document.querySelector(`[data-ovutest="${entry.ovulationTest || "none"}"]`),
   );
   document.querySelectorAll("[data-symptom]").forEach((button) => {
     const isActive = symptoms.includes(button.dataset.symptom);
@@ -777,6 +808,7 @@ function saveJournalEntry() {
   const activeFlow = document.querySelector("[data-flow].is-active");
   const activeMucus = document.querySelector("[data-mucus].is-active");
   const activeIntercourse = document.querySelector("[data-intercourse].is-active");
+  const activeOvutest = document.querySelector("[data-ovutest].is-active");
   const symptoms = [...document.querySelectorAll("[data-symptom].is-active")].map(
     (button) => button.dataset.symptom,
   );
@@ -784,17 +816,19 @@ function saveJournalEntry() {
   const flow = activeFlow ? activeFlow.dataset.flow : "none";
   const mucus = activeMucus ? activeMucus.dataset.mucus : "none";
   const intercourse = activeIntercourse ? activeIntercourse.dataset.intercourse : "none";
+  const ovulationTest = activeOvutest ? activeOvutest.dataset.ovutest : "none";
 
   state.journal[dateString] = {
     flow,
     mucus,
     intercourse,
+    ovulationTest,
     symptoms,
     notes: els.journalNotes.value.trim(),
   };
   saveState();
   render();
-  els.saveState.textContent = formatSaveSummary({ flow, mucus, intercourse, symptoms });
+  els.saveState.textContent = formatSaveSummary({ flow, mucus, intercourse, ovulationTest, symptoms });
 }
 
 const FLOW_LABELS = { none: "aucun", light: "léger", medium: "moyen", heavy: "fort" };
@@ -802,12 +836,14 @@ const MUCUS_LABELS = {
   none: "rien", dry: "sèche", sticky: "collante", creamy: "crémeuse", watery: "aqueuse", eggwhite: "blanc d'œuf",
 };
 const INTERCOURSE_LABELS = { none: "aucun", unprotected: "sans préservatif", protected: "avec préservatif" };
+const OVUTEST_LABELS = { none: "non testé", negative: "négatif", positive: "positif" };
 
-function formatSaveSummary({ flow, mucus, intercourse, symptoms }) {
+function formatSaveSummary({ flow, mucus, intercourse, ovulationTest, symptoms }) {
   const parts = [];
   if (flow !== "none") parts.push(`flux ${FLOW_LABELS[flow] || flow}`);
   if (mucus !== "none") parts.push(`glaire ${MUCUS_LABELS[mucus] || mucus}`);
   if (intercourse !== "none") parts.push(`rapport ${INTERCOURSE_LABELS[intercourse] || intercourse}`);
+  if (ovulationTest && ovulationTest !== "none") parts.push(`test ${OVUTEST_LABELS[ovulationTest] || ovulationTest}`);
   if (symptoms.length) parts.push(`${symptoms.length} ressenti${symptoms.length > 1 ? "s" : ""}`);
   if (parts.length === 0) return "Enregistré (rien de particulier)";
   return `Enregistré · ${parts.join(", ")}`;
@@ -1099,17 +1135,31 @@ function getCycleWindows(cycle, stats) {
   let nextStart = addDays(cycle.currentStart, stats.average);
   let nextStartEarliest = addDays(nextStart, -periodUncertainty);
   let nextStartLatest = addDays(nextStart, periodUncertainty);
-  let refinedByMucus = false;
+  let refinedBy = null;
 
-  const mucusPeak = getMucusPeakInCycle(cycle);
-  if (mucusPeak) {
-    ovulationPeak = mucusPeak;
-    ovulationStart = addDays(mucusPeak, -1);
-    ovulationEnd = addDays(mucusPeak, 1);
-    nextStart = addDays(mucusPeak, 14);
-    nextStartEarliest = addDays(mucusPeak, 13);
-    nextStartLatest = addDays(mucusPeak, 15);
-    refinedByMucus = true;
+  const positiveTest = getLastOvulationTestInCycle(cycle, "positive");
+  if (positiveTest) {
+    ovulationPeak = addDays(positiveTest, 1);
+    refinedBy = "test-positive";
+  } else {
+    const mucusPeak = getMucusPeakInCycle(cycle);
+    if (mucusPeak) {
+      ovulationPeak = mucusPeak;
+      refinedBy = "mucus";
+    }
+    const lastNegative = getLastOvulationTestInCycle(cycle, "negative");
+    if (lastNegative && diffDays(lastNegative, ovulationPeak) >= 0) {
+      ovulationPeak = addDays(lastNegative, 1);
+      refinedBy = refinedBy === "mucus" ? "mucus+negative" : "test-negative";
+    }
+  }
+
+  if (refinedBy) {
+    ovulationStart = addDays(ovulationPeak, -1);
+    ovulationEnd = addDays(ovulationPeak, 1);
+    nextStart = addDays(ovulationPeak, 14);
+    nextStartEarliest = addDays(ovulationPeak, 13);
+    nextStartLatest = addDays(ovulationPeak, 15);
   }
 
   return {
@@ -1121,8 +1171,25 @@ function getCycleWindows(cycle, stats) {
     ovulationPeak,
     fertileStart: addDays(ovulationPeak, -5),
     fertileEnd: addDays(ovulationPeak, 1),
-    refinedByMucus,
+    refinedBy,
+    refinedByMucus: refinedBy === "mucus" || refinedBy === "mucus+negative",
+    refinedByTest: refinedBy === "test-positive" || refinedBy === "test-negative" || refinedBy === "mucus+negative",
   };
+}
+
+function getLastOvulationTestInCycle(cycle, kind) {
+  const cycleStart = cycle.currentStart;
+  const cycleEnd = cycle.nextStart;
+  let bestDate = null;
+  for (const [dateString, entry] of Object.entries(state.journal)) {
+    if (!entry || entry.ovulationTest !== kind) continue;
+    if (!isValidDateString(dateString)) continue;
+    const date = parseDate(dateString);
+    if (diffDays(cycleStart, date) < 0) continue;
+    if (diffDays(date, cycleEnd) <= 0) continue;
+    if (!bestDate || diffDays(bestDate, date) > 0) bestDate = date;
+  }
+  return bestDate;
 }
 
 function getMucusPeakInCycle(cycle) {

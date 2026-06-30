@@ -260,6 +260,8 @@
               <span><i class="dot ovulation"></i>Ovulation</span>
               <span><i class="dot mucus"></i>Glaire fertile</span>
               <span><i class="dot intercourse"></i>Rapport</span>
+              <span><i class="test-mark test-positive">+</i>Test +</span>
+              <span><i class="test-mark test-negative">&minus;</i>Test &minus;</span>
             </div>
           </div>
           <div id="calendar" class="calendar-grid" aria-live="polite"></div>
@@ -305,6 +307,16 @@
               <button type="button" data-intercourse="unprotected" aria-pressed="false">Sans pr&eacute;servatif</button>
               <button type="button" data-intercourse="protected" aria-pressed="false">Avec pr&eacute;servatif</button>
             </div>
+          </div>
+
+          <div class="journal-group">
+            <span class="field-title">Test d'ovulation</span>
+            <div class="segmented test-grid" role="group" aria-label="Test d'ovulation">
+              <button type="button" data-ovutest="none" aria-pressed="true">Pas fait</button>
+              <button type="button" data-ovutest="negative" aria-pressed="false">N&eacute;gatif</button>
+              <button type="button" data-ovutest="positive" aria-pressed="false">Positif</button>
+            </div>
+            <p class="ovutest-hint">Un test positif d&eacute;cale le pic estim&eacute; au lendemain. Plusieurs n&eacute;gatifs repoussent le pic.</p>
           </div>
 
           <div class="journal-group">

@@ -603,6 +603,65 @@ button:focus-visible {
   background: var(--sage);
 }
 
+.test-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.test-mark.test-positive {
+  background: #c75858;
+  color: #fff;
+}
+
+.test-mark.test-negative {
+  background: #b8b0a8;
+  color: #fff;
+}
+
+.day.has-test {
+  position: relative;
+}
+
+.day.has-test-positive::before {
+  content: "+";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 3px;
+  background: #c75858;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.day.has-test-negative::before {
+  content: "−";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 3px;
+  background: #b8b0a8;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -754,6 +813,17 @@ button:focus-visible {
 
 .intercourse-grid {
   grid-template-columns: 1fr 1fr 1fr;
+}
+
+.test-grid {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.ovutest-hint {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
 }
 
 .chip-grid {
