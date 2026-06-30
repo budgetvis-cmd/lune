@@ -342,69 +342,6 @@
       </section>
     </main>
 
-    <div id="quickAction" class="quick-action is-hidden" role="dialog" aria-modal="true" aria-labelledby="quickActionDate">
-      <div class="quick-action-backdrop" data-quick-close></div>
-      <div class="quick-action-sheet" role="document">
-        <header class="quick-action-head">
-          <div>
-            <p class="eyebrow">Saisie rapide</p>
-            <strong id="quickActionDate">Date</strong>
-          </div>
-          <button id="quickActionClose" class="icon-button" type="button" aria-label="Fermer" data-quick-close>&times;</button>
-        </header>
-
-        <div class="quick-group">
-          <span class="field-title">Test d'ovulation</span>
-          <div class="segmented quick-test" role="group">
-            <button type="button" data-quick-ovutest="none" aria-pressed="true">Pas fait</button>
-            <button type="button" data-quick-ovutest="negative" aria-pressed="false">N&eacute;gatif</button>
-            <button type="button" data-quick-ovutest="positive" aria-pressed="false">Positif</button>
-          </div>
-        </div>
-
-        <div class="quick-group">
-          <span class="field-title">Flux</span>
-          <div class="segmented quick-flow" role="group">
-            <button type="button" data-quick-flow="none" aria-pressed="true">Aucun</button>
-            <button type="button" data-quick-flow="light" aria-pressed="false">L&eacute;ger</button>
-            <button type="button" data-quick-flow="medium" aria-pressed="false">Moyen</button>
-            <button type="button" data-quick-flow="heavy" aria-pressed="false">Fort</button>
-          </div>
-        </div>
-
-        <div class="quick-group">
-          <span class="field-title">Glaire cervicale</span>
-          <div class="segmented mucus-grid quick-mucus" role="group">
-            <button type="button" data-quick-mucus="none" aria-pressed="true">Rien</button>
-            <button type="button" data-quick-mucus="dry" aria-pressed="false">S&egrave;che</button>
-            <button type="button" data-quick-mucus="sticky" aria-pressed="false">Collante</button>
-            <button type="button" data-quick-mucus="creamy" aria-pressed="false">Cr&eacute;meuse</button>
-            <button type="button" data-quick-mucus="watery" aria-pressed="false">Aqueuse</button>
-            <button type="button" data-quick-mucus="eggwhite" aria-pressed="false">Blanc d'&oelig;uf</button>
-          </div>
-        </div>
-
-        <div class="quick-group">
-          <span class="field-title">Rapport</span>
-          <div class="segmented intercourse-grid quick-intercourse" role="group">
-            <button type="button" data-quick-intercourse="none" aria-pressed="true">Aucun</button>
-            <button type="button" data-quick-intercourse="unprotected" aria-pressed="false">Sans pr&eacute;servatif</button>
-            <button type="button" data-quick-intercourse="protected" aria-pressed="false">Avec pr&eacute;servatif</button>
-          </div>
-        </div>
-
-        <button id="quickActionMarkPeriod" class="ghost-button quick-mark-period" type="button">
-          Marquer comme d&eacute;but de r&egrave;gles
-        </button>
-
-        <p id="quickActionStatus" class="quick-action-status" role="status"></p>
-
-        <button id="quickActionDetails" class="text-button quick-details" type="button">
-          Ouvrir le journal complet pour plus de d&eacute;tails &darr;
-        </button>
-      </div>
-    </div>
-
     <template id="historyItemTemplate">
       <li>
         <span></span>

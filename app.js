@@ -52,15 +52,7 @@ const els = {
   reminderInputs: [...document.querySelectorAll("[data-reminder]")],
   remindersStatus: document.querySelector("#remindersStatus"),
   testNotificationButton: document.querySelector("#testNotificationButton"),
-  quickAction: document.querySelector("#quickAction"),
-  quickActionDate: document.querySelector("#quickActionDate"),
-  quickActionClose: document.querySelector("#quickActionClose"),
-  quickActionMarkPeriod: document.querySelector("#quickActionMarkPeriod"),
-  quickActionStatus: document.querySelector("#quickActionStatus"),
-  quickActionDetails: document.querySelector("#quickActionDetails"),
 };
-
-let quickActionDateString = null;
 
 const formatter = new Intl.DateTimeFormat("fr-FR", {
   weekday: "long",
@@ -292,45 +284,6 @@ function bindEvents() {
     if (!button) return;
     els.journalDate.value = button.dataset.date;
     loadJournalEntry(button.dataset.date);
-    openQuickAction(button.dataset.date);
-  });
-
-  document.querySelectorAll("[data-quick-close]").forEach((node) => {
-    node.addEventListener("click", closeQuickAction);
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !els.quickAction.classList.contains("is-hidden")) {
-      closeQuickAction();
-    }
-  });
-
-  document.querySelectorAll("[data-quick-ovutest]").forEach((button) => {
-    button.addEventListener("click", () => quickUpdate("ovulationTest", button.dataset.quickOvutest));
-  });
-  document.querySelectorAll("[data-quick-flow]").forEach((button) => {
-    button.addEventListener("click", () => quickUpdate("flow", button.dataset.quickFlow));
-  });
-  document.querySelectorAll("[data-quick-mucus]").forEach((button) => {
-    button.addEventListener("click", () => quickUpdate("mucus", button.dataset.quickMucus));
-  });
-  document.querySelectorAll("[data-quick-intercourse]").forEach((button) => {
-    button.addEventListener("click", () => quickUpdate("intercourse", button.dataset.quickIntercourse));
-  });
-
-  els.quickActionMarkPeriod.addEventListener("click", () => {
-    if (!quickActionDateString) return;
-    els.journalDate.value = quickActionDateString;
-    togglePeriodStart();
-    renderQuickActionState();
-    flashQuickStatus(state.periods.includes(quickActionDateString) ? "Jour marqué comme début de règles" : "Marquage retiré");
-  });
-
-  els.quickActionDetails.addEventListener("click", () => {
-    closeQuickAction();
-    if (window.matchMedia("(max-width: 1120px)").matches) {
-      document.querySelector(".journal-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
   });
 
   document.querySelectorAll("[data-flow]").forEach((button) => {
@@ -356,7 +309,10 @@ function bindEvents() {
   });
 
   document.querySelectorAll("[data-ovutest]").forEach((button) => {
-    button.addEventListener("click", () => setActiveButton("[data-ovutest]", button));
+    button.addEventListener("click", () => {
+      setActiveButton("[data-ovutest]", button);
+      autoSaveOvulationTest(button.dataset.ovutest);
+    });
   });
 
   els.markPeriodStartButton.addEventListener("click", togglePeriodStart);
@@ -828,61 +784,16 @@ function renderMarkPeriodStartButton(dateString) {
     : "Marquer comme début de règles";
 }
 
-function openQuickAction(dateString) {
-  if (!dateString) return;
-  quickActionDateString = dateString;
-  const date = parseDate(dateString);
-  els.quickActionDate.textContent = formatter.format(date);
-  els.quickActionStatus.textContent = "";
-  renderQuickActionState();
-  els.quickAction.classList.remove("is-hidden");
-}
-
-function closeQuickAction() {
-  els.quickAction.classList.add("is-hidden");
-  quickActionDateString = null;
-}
-
-function renderQuickActionState() {
-  if (!quickActionDateString) return;
-  const entry = state.journal[quickActionDateString] || {
-    flow: "none",
-    mucus: "none",
-    intercourse: "none",
-    ovulationTest: "none",
-    symptoms: [],
-    notes: "",
-  };
-
-  setQuickActive("[data-quick-flow]", "quickFlow", entry.flow || "none");
-  setQuickActive("[data-quick-mucus]", "quickMucus", entry.mucus || "none");
-  setQuickActive("[data-quick-intercourse]", "quickIntercourse", entry.intercourse || "none");
-  setQuickActive("[data-quick-ovutest]", "quickOvutest", entry.ovulationTest || "none");
-
-  const isStart = state.periods.includes(quickActionDateString);
-  els.quickActionMarkPeriod.classList.toggle("is-active", isStart);
-  els.quickActionMarkPeriod.textContent = isStart
-    ? "Retirer ce début de règles"
-    : "Marquer comme début de règles";
-}
-
-function setQuickActive(selector, datasetKey, value) {
-  document.querySelectorAll(selector).forEach((button) => {
-    const isActive = button.dataset[datasetKey] === value;
-    button.classList.toggle("is-active", isActive);
-    button.setAttribute("aria-pressed", String(isActive));
-  });
-}
-
-function quickUpdate(field, value) {
-  if (!quickActionDateString) return;
+function autoSaveOvulationTest(value) {
+  const dateString = els.journalDate.value;
+  if (!dateString || !isValidDateString(dateString)) return;
   const todayString = toDateInput(startOfDay(new Date()));
-  if (quickActionDateString > todayString && (field === "flow" || field === "ovulationTest")) {
-    flashQuickStatus("Pas de saisie sur une date future");
+  if (dateString > todayString) {
+    els.saveState.textContent = "Pas de test sur une date future";
     return;
   }
 
-  const existing = state.journal[quickActionDateString] || {
+  const existing = state.journal[dateString] || {
     flow: "none",
     mucus: "none",
     intercourse: "none",
@@ -891,38 +802,22 @@ function quickUpdate(field, value) {
     notes: "",
   };
 
-  state.journal[quickActionDateString] = {
+  state.journal[dateString] = {
     flow: existing.flow || "none",
     mucus: existing.mucus || "none",
     intercourse: existing.intercourse || "none",
-    ovulationTest: existing.ovulationTest || "none",
     symptoms: Array.isArray(existing.symptoms) ? existing.symptoms : [],
     notes: existing.notes || "",
-    [field]: value,
+    ovulationTest: value,
   };
 
   saveState();
-  render();
-  renderQuickActionState();
-  flashQuickStatus(quickStatusFor(field, value));
-}
+  renderSummary();
+  renderCalendar();
+  renderCycleRecap();
 
-function quickStatusFor(field, value) {
-  if (value === "none") return "Effacé";
-  if (field === "flow") return `Flux ${FLOW_LABELS[value] || value}`;
-  if (field === "mucus") return `Glaire ${MUCUS_LABELS[value] || value}`;
-  if (field === "intercourse") return `Rapport ${INTERCOURSE_LABELS[value] || value}`;
-  if (field === "ovulationTest") return `Test ${OVUTEST_LABELS[value] || value}`;
-  return "Enregistré";
-}
-
-let quickStatusTimeout = null;
-function flashQuickStatus(text) {
-  els.quickActionStatus.textContent = text;
-  if (quickStatusTimeout) clearTimeout(quickStatusTimeout);
-  quickStatusTimeout = setTimeout(() => {
-    els.quickActionStatus.textContent = "";
-  }, 1800);
+  const label = value === "none" ? "Test effacé" : `Test ${OVUTEST_LABELS[value] || value} · estimations mises à jour`;
+  els.saveState.textContent = label;
 }
 
 function togglePeriodStart() {
